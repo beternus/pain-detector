@@ -2,6 +2,7 @@ import cv2
 import mediapipe as mp
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 
 mp_drawing = mp.solutions.drawing_utils
 mp_face_mesh = mp.solutions.face_mesh
@@ -183,8 +184,15 @@ recall = TP / (TP + FN) if TP + FN > 0 else 0
 f1 = 2 * (precisao * recall) / (precisao + recall) if (precisao + recall) > 0 else 0
 acuracia = (TP + TN) / (TP + FP + TN + FN) if (TP + FP + TN + FN) > 0 else 0
 
-print(f"TP: {TP}, FP: {FP}, TN: {TN}, FN: {FN}")
-print(f"Precision: {precisao:.2f}, Recall: {recall:.2f}, F1-score: {f1:.2f}, Accuracy: {acuracia:.2f}")
+# Tabela de métricas
+tabela_metricas = pd.DataFrame({
+    'Métrica': ['True Positives', 'False Positives', 'True Negatives', 'False Negatives',
+                'Precision', 'Recall', 'F1-score', 'Accuracy'],
+    'Valor': [TP, FP, TN, FN, precisao, recall, f1, acuracia]
+})
+
+# Exibe a tabela
+print(tabela_metricas.to_string(index=False))
 
 # -----------------------------
 # Plot
