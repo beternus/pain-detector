@@ -3,11 +3,13 @@ import mediapipe as mp
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+import seaborn as sns
+from sklearn.metrics import confusion_matrix
 
 mp_drawing = mp.solutions.drawing_utils
 mp_face_mesh = mp.solutions.face_mesh
 
-# Facial landmarks (IDs estipulados/fictícios para teste numérico)
+# Facial landmarks (IDs fictícios para teste numérico)
 LANDMARKS = {
     'topo_testa': 0,
     'base_queixo': 1,
@@ -41,7 +43,7 @@ FPS = 30
 DURATION = 15  # seconds
 N_FRAMES = FPS * DURATION
 
-# Multiple pain periods (start, end) in frames
+# Pain periods (start, end) in frames
 DOR_PERIODS = [
     (3 * FPS, 5 * FPS),
     (8 * FPS, 10 * FPS),
@@ -78,6 +80,8 @@ def gerar_landmarks(frame_idx):
 TP = FP = TN = FN = 0
 detec_dor = []
 janela_deteccao = []
+y_true = []
+y_pred = []
 
 # Calibration
 valores_sobr_esq = []
@@ -167,6 +171,9 @@ for idx, frame in enumerate(frames_simulados):
     detec_dor.append(suavizado)
 
     dor_real = is_pain_frame(idx)
+    y_true.append(int(dor_real))
+    y_pred.append(int(suavizado))
+
     if suavizado and dor_real:
         TP += 1
     elif suavizado and not dor_real:
@@ -186,16 +193,31 @@ acuracia = (TP + TN) / (TP + FP + TN + FN) if (TP + FP + TN + FN) > 0 else 0
 
 # Tabela de métricas
 tabela_metricas = pd.DataFrame({
-    'Métrica': ['True Positives', 'False Positives', 'True Negatives', 'False Negatives',
-                'Precision', 'Recall', 'F1-score', 'Accuracy'],
-    'Valor': [TP, FP, TN, FN, precisao, recall, f1, acuracia]
+    'Metric': ['True Positives', 'False Positives', 'True Negatives', 'False Negatives',
+               'Precision', 'Recall', 'F1-score', 'Accuracy'],
+    'Result': [TP, FP, TN, FN, precisao, recall, f1, acuracia]
 })
 
-# Exibe a tabela
+print("\n=== Evaluation Metrics ===")
 print(tabela_metricas.to_string(index=False))
 
 # -----------------------------
-# Plot
+# Confusion Matrix Plot
+# -----------------------------
+conf_mat = confusion_matrix(y_true, y_pred)
+
+plt.figure(figsize=(5, 4))
+sns.heatmap(conf_mat, annot=True, fmt="d", cmap="Blues",
+            xticklabels=["No Pain", "Pain"],
+            yticklabels=["No Pain", "Pain"])
+plt.xlabel("Predicted Label")
+plt.ylabel("True Label")
+plt.title("Confusion Matrix")
+plt.tight_layout()
+plt.show()
+
+# -----------------------------
+# Plot: Pain Detection Over Time
 # -----------------------------
 plt.figure(figsize=(12, 4))
 plt.plot(detec_dor, label="Detected pain", color='blue')
